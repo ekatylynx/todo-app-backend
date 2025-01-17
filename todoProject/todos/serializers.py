@@ -2,51 +2,63 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate
-from .models import Todo
+from .models import Todo, Category
 import pytz
 
 User = get_user_model()
 
-class UserSerializer(serializers.ModelSerializer):
-    class Mega (object):
-        model = User
-        fields = ['id', 'username', 'password', 'email']
-    # password = serializers.CharField(write_only=True)
+# Create a new User
 
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'email', 'username', 'password')
+        fields = ('email', 'password')
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Пользователь с таким email уже существует.")
+        return value
 
     def create(self, validated_data):
-        user = User.objects.create_user(
-            email=validated_data['email'],
-            username=validated_data['username'],
-            password=validated_data['password']
-        )
+        email = validated_data['email']
+        username = email.split('@')[0]
+        user = User.objects.create_user(email=email, username=username, password=validated_data['password'])
+        # Создаем категорию с title='all' и привязываем её к пользователю
+        Category.objects.create(title='all', author=user)
         return user
 
-class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        # Создаём токен для пользователя
-        token = super().get_token(user)
-        # Добавляем дополнительные данные в токен (например, email)
-        token['email'] = user.email
-        return token
+# Login a User
 
-    def validate(self, attrs):
-        # Проверяем, существует ли пользователь и введены ли правильные данные
-        username = attrs.get("username")
-        password = attrs.get("password")
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
 
-        user = authenticate(username=username, password=password)  # Аутентификация пользователя
-        if not user:
-            # Если пользователь не найден или пароль неверен
-            raise serializers.ValidationError({"detail": "No active account found with the given credentials"})
+    def validate(self, data):
+        email = data.get('email')
+        password = data.get('password')
 
-        # Если всё корректно, вызываем стандартный метод `validate`
-        data = super().validate(attrs)
+        if not User.objects.filter(email=email).exists():
+            raise serializers.ValidationError("Пользователь с таким email не существует.")
+
+        user = User.objects.get(email=email)
+        if not user.check_password(password):
+            raise serializers.ValidationError("Неправильные данные.")
+
+        data['user'] = user
         return data
+
+class TodoCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Todo
+        fields = ['title', 'description', 'priority', 'from_deadline', 'until_deadline', 'status']
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        todo = Todo.objects.create(author=user, **validated_data)
+        return todo
 
 class TodosSerializer(serializers.ModelSerializer):
     created_at_moscow = serializers.SerializerMethodField()

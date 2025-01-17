@@ -27,16 +27,18 @@ SECRET_KEY = 'django-insecure-4h#uli%os(69*x8uo*(l#4azw=73c&810#_tjw!_jtn&fcuq$1
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '127.0.0.1:8000']
 
-CORS_ALLOW_CREDENTIALS = True
+# SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_HTTPONLY = False
+# CSRF_USE_SESSIONS = True
 
 # CORS_ORIGIN_WHITELIST = (
 #     'http://localhost:8000'
 # )
 
 CSRF_TRUSTED_ORIGINS = [
-    'http://127.0.0.1:8000'
+    'http://*'
 ]
 
 CORS_ALLOWED_ORIGINS = [
@@ -50,6 +52,7 @@ CORS_ALLOWED_ORIGINS = [
 
 INSTALLED_APPS = [
     'django.contrib.admin',
+    'corsheaders',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -58,12 +61,12 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
-    # 'corsheaders',
+    'rest_framework_simplejwt.token_blacklist',
     'todos',
 ]
 
 MIDDLEWARE = [
-    # 'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -73,6 +76,12 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True
+SESSION_COOKIE_SECURE=True
+SESSION_COOKIE_SAMESITE='None'
+CSRF_COOKIE_SECURE=True
 
 ROOT_URLCONF = 'todoProject.urls'
 
@@ -160,7 +169,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         # 'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly',
         # Разрешить доступ всем по умолчанию
-        # 'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.AllowAny',
         'rest_framework.permissions.IsAuthenticated',
     ]
 }
@@ -169,9 +178,7 @@ AUTH_USER_MODEL = 'todos.User'
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    # # 'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    # 'ROTATE_REFRESH_TOKENS': True,
-    # 'BLACKLIST_AFTER_ROTATION': True,
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=5),
     'AUTH_HEADER_TYPES': ('Bearer',),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
     'SLIDING_TOKEN_LIFETIME': timedelta(days=30),

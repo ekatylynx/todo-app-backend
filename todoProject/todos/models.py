@@ -15,8 +15,6 @@ class User(AbstractUser):
         related_name='custom_user_set',
         related_query_name='custom_user'
     )
-    # Связь многие-ко-многим между User и Tod
-    todos = models.ManyToManyField('Todo', blank=True, related_name='users')
 
     # Указываем, что email будет использоваться в качестве уникального идентификатора
     USERNAME_FIELD = 'email'
@@ -45,7 +43,9 @@ class Todo(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Время создания')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Время изменения')
     status = models.BooleanField(default=False, verbose_name='Статус задачи')
-    categories = models.ManyToManyField('Category', blank=True, verbose_name='Категория')
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    categories = models.ManyToManyField('Category', verbose_name='Категория')
+    # Связь один ко многим между User и Todo (у одного user много todo, у одного todo - один user)
 
     class Meta:
         verbose_name = 'Задача'
@@ -54,6 +54,7 @@ class Todo(models.Model):
 
 class Category(models.Model):
     title = models.CharField(max_length=150, db_index=True, verbose_name='Категория')
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.title
@@ -62,4 +63,3 @@ class Category(models.Model):
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
         ordering = ['title']
-
