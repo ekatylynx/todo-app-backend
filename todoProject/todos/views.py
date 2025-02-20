@@ -34,7 +34,7 @@ class CreateUser(APIView):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({"message": "Пользователь успешно зарегистрирован."}, status=status.HTTP_201_CREATED)
+            return Response({"message": "Registration was successful."}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # АВТОРИЗАЦИЯ LOGIN USER SIGN IN
@@ -69,6 +69,7 @@ class TodosListView(APIView):
     def get(self, request):
         user = request.user
         todos = Todo.objects.filter(author=user)
+        # print(f'Object retrieved: {request.user}')
         serializer = TodosSerializer(todos, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

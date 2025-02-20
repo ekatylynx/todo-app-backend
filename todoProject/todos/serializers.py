@@ -19,7 +19,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("Пользователь с таким email уже существует.")
+            raise serializers.ValidationError("A user with this email already exists.")
         return value
 
     def create(self, validated_data):
@@ -41,11 +41,11 @@ class LoginSerializer(serializers.Serializer):
         password = data.get('password')
 
         if not User.objects.filter(email=email).exists():
-            raise serializers.ValidationError("Пользователь с таким email не существует.")
+            raise serializers.ValidationError("A user with this email does not exist.")
 
         user = User.objects.get(email=email)
         if not user.check_password(password):
-            raise serializers.ValidationError("Неправильные данные.")
+            raise serializers.ValidationError("Incorrect data.")
 
         data['user'] = user
         return data
