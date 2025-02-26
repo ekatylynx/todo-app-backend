@@ -1,6 +1,6 @@
 # from todos.views import index
 from django.urls import path, include
-from .views import CreateUser, LoginUserView, TodoCreateViews
+from .views import CreateUser, LoginUserView, TodoCreateViews, UserCategoriesListView
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -16,4 +16,5 @@ urlpatterns = [
     path('todos/', views.TodosListView.as_view(), name='GetTodos'),
     path('todos/create/', TodoCreateViews.as_view(), name='CreateTodo'),
     # path('password_reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),  # Сброс пароля
+    path('todos/categories/', UserCategoriesListView.as_view(), name='GetAllCategoriesUser')
 ]

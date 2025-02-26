@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 import environ
+import os
 
 env = environ.Env()
 environ.Env.read_env()
@@ -21,6 +22,8 @@ environ.Env.read_env()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Take environment variables from .env file
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -137,7 +140,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
@@ -164,15 +166,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Django Rest Framework Configure
 
 REST_FRAMEWORK = {
-    # Use Django's standard `django.contrib.auth` permissions,
-    # or allow read-only access for unauthenticated users.
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 
     'DEFAULT_PERMISSION_CLASSES': [
-        # 'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly',
-        # Разрешить доступ всем по умолчанию
         'rest_framework.permissions.AllowAny',
         'rest_framework.permissions.IsAuthenticated',
     ]
@@ -181,10 +179,11 @@ REST_FRAMEWORK = {
 AUTH_USER_MODEL = 'todos.User'
 
 SIMPLE_JWT = {
+
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
+    'ROTATE_REFRESH_TOKENS': False,
+    # 'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': False,
 
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
@@ -196,14 +195,14 @@ SIMPLE_JWT = {
     'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
-    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
+    # 'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
 
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': env('SIGNING_KEY'),
-    'VERIFYING_KEY': None,
-    'AUDIENCE': None,
-    'ISSUER': None,
-    'JWK_URL': None,
-    'LEEWAY': 0,
+    # 'VERIFYING_KEY': None,
+    # 'AUDIENCE': None,
+    # 'ISSUER': None,
+    # 'JWK_URL': None,
+    # 'LEEWAY': 0,
 
 }

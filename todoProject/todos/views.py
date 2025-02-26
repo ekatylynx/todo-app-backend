@@ -1,27 +1,19 @@
 from http.client import responses
 
-from django.shortcuts import render
-from django.http import JsonResponse
-from django.core import serializers
-import json
-from django.shortcuts import render
-from django.http import HttpResponse
-import logging
-from django.conf import settings
-
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 from rest_framework.generics import ListAPIView
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import DjangoModelPermissionsOrAnonReadOnly
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import User
 
-from .models import Todo
-from .serializers import TodosSerializer, UserSerializer, LoginSerializer
+from .models import Todo, Category
+from .serializers import TodosSerializer, TodoCreateSerializer, UserSerializer, LoginSerializer, CategorySerializer
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -75,9 +67,17 @@ class TodosListView(APIView):
 
 class TodoCreateViews(APIView):
     permission_classes = [IsAuthenticated]
+
     def post(self, request):
-        serializer = TodosSerializer(data=request.data, context={'request': request})
+        serializer = TodoCreateSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserCategoriesListView(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = CategorySerializer
+
+    def get_queryset(self):
+        return Category.objects.filter(author=self.request.user)

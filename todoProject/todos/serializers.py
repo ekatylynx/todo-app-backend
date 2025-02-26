@@ -1,14 +1,12 @@
+# serializers.py
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from django.contrib.auth import authenticate
 from .models import Todo, Category
 import pytz
 
 User = get_user_model()
 
 # Create a new User
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -31,7 +29,6 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 # Login a User
-
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
@@ -50,14 +47,44 @@ class LoginSerializer(serializers.Serializer):
         data['user'] = user
         return data
 
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = '__all__'
+
+# Сериализатор для создания задач
 class TodoCreateSerializer(serializers.ModelSerializer):
+    categories = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Category.objects.all(),
+        required=False
+    )
+    # из-за этой конструкции даже верные id категорий воспринимаются как неверные
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     user = self.context.get('request').user
+    #     self.fields['categories'].queryset = Category.objects.filter(author=user)
+
     class Meta:
         model = Todo
-        fields = ['title', 'description', 'priority', 'from_deadline', 'until_deadline', 'status']
+        fields = ['title', 'description', 'priority', 'from_deadline', 'until_deadline', 'status', 'categories']
+
+    def validate_categories(self, value):
+        user = self.context['request'].user
+        for category in value:
+            if category.author != user:
+                raise serializers.ValidationError(
+                    f"Category '{category.title}' (id {category.id}) does not belong to you."
+                )
+        return value
 
     def create(self, validated_data):
         user = self.context['request'].user
+        categories = validated_data.pop('categories', [])
+        if not categories:
+            categories = [Category.objects.get(title='all', author=user)]
         todo = Todo.objects.create(author=user, **validated_data)
+        todo.categories.set(categories)
         return todo
 
 class TodosSerializer(serializers.ModelSerializer):
