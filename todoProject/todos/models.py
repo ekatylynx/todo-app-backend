@@ -60,6 +60,7 @@ class Category(models.Model):
         return self.title
 
     class Meta:
+        unique_together = ('title', 'author')  # Уникальность title для каждого автора
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
         ordering = ['title']

@@ -87,6 +87,30 @@ class TodoCreateSerializer(serializers.ModelSerializer):
         todo.categories.set(categories)
         return todo
 
+class CategoryCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['title']
+
+    def validate_title(self, value):
+        user = self.context['request'].user
+
+        # Запрещаем создание категории с названием 'all'
+        if value.lower() == 'all':
+            raise serializers.ValidationError("Category title 'all' is reserved and cannot be used.")
+
+        # Проверяем, что категория с таким названием уже не существует у пользователя
+        if Category.objects.filter(title__iexact=value, author=user).exists():
+            raise serializers.ValidationError("You already have a category with this title.")
+        return value
+
+    def create(self, validated_data):
+        # Автоматически добавляем текущего пользователя в поле author
+        user = self.context['request'].user
+        validated_data['author'] = user
+        return super().create(validated_data)
+
+
 class TodosSerializer(serializers.ModelSerializer):
     created_at_moscow = serializers.SerializerMethodField()
     updated_at_moscow = serializers.SerializerMethodField()

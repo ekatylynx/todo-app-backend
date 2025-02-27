@@ -12,7 +12,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.contrib.auth import get_user_model
 
 from .models import Todo, Category
-from .serializers import TodosSerializer, TodoCreateSerializer, UserSerializer, LoginSerializer, CategorySerializer
+from .serializers import TodosSerializer, TodoCreateSerializer, UserSerializer, LoginSerializer, CategorySerializer, \
+    CategoryCreateSerializer
 from django.utils import timezone
 
 User = get_user_model()
@@ -81,3 +82,38 @@ class UserCategoriesListView(ListAPIView):
 
     def get_queryset(self):
         return Category.objects.filter(author=self.request.user)
+
+# Фильтрация задач по категориям
+class TodoFilterByCategoryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, category_id):
+        # Получаем текущего пользователя
+        user = request.user
+
+        # Проверяем, что категория принадлежит пользователю
+        try:
+            category = Category.objects.get(id=category_id, author=user)
+        except Category.DoesNotExist:
+            return Response(
+                {"error": "Category not found or does not belong to you."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Фильтруем задачи по категории
+        # Чтобы избежать проблемы N+1 - prefetch_related
+        todos = Todo.objects.filter(categories=category, author=user).prefetch_related('categories')
+
+        # Сериализуем данные
+        serializer = TodosSerializer(todos, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class CategoryCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = CategoryCreateSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
