@@ -110,6 +110,11 @@ class CategoryCreateSerializer(serializers.ModelSerializer):
         validated_data['author'] = user
         return super().create(validated_data)
 
+class TodoUpdateStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Todo
+        fields = ['status']
+
 
 class TodosSerializer(serializers.ModelSerializer):
     created_at_moscow = serializers.SerializerMethodField()
