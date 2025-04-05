@@ -15,7 +15,7 @@ from drf_yasg.utils import swagger_auto_schema
 
 from .models import Todo, Category
 from .serializers import TodosSerializer, TodoCreateSerializer, UserSerializer, LoginSerializer, CategorySerializer, \
-    CategoryCreateSerializer, TodoUpdateStatusSerializer
+    CategoryCreateSerializer, TodoUpdateStatusSerializer, UserProfileSerializer
 from django.utils import timezone
 
 User = get_user_model()
@@ -106,8 +106,8 @@ class TodoCreateViews(APIView):
     def post(self, request):
         serializer = TodoCreateSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            todo = serializer.save()
+            return Response({"id": todo.id, **serializer.data}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserCategoriesListView(ListAPIView):
@@ -202,3 +202,18 @@ class TodoUpdateStatusView(UpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        responses={
+            200: "User profile data retrieved successfully",
+            401: "Unauthorized"
+        },
+        operation_description="Get current user's profile information"
+    )
+    def get(self, request):
+        user = request.user
+        serializer = UserProfileSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)

@@ -21,4 +21,5 @@ urlpatterns = [
     path('todos/category/<int:category_id>/', TodoFilterByCategoryView.as_view(), name='FilterCategories'),
     path('todos/categories/create/', CategoryCreateView.as_view(), name='create-category'),
     path('todos/<int:pk>/update-status/', TodoUpdateStatusView.as_view(), name='todo_update_status'),
+    path('api/user/profile/', views.UserProfileView.as_view(), name='user_profile'),
 ]

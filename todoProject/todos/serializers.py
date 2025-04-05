@@ -67,7 +67,8 @@ class TodoCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Todo
-        fields = ['title', 'description', 'priority', 'from_deadline', 'until_deadline', 'status', 'categories']
+        fields = ['id', 'title', 'description', 'priority', 'from_deadline', 'until_deadline', 'status', 'categories', 'created_at']
+        read_only_fields = ['id', 'created_at']
 
     def validate_categories(self, value):
         user = self.context['request'].user
@@ -115,6 +116,27 @@ class TodoUpdateStatusSerializer(serializers.ModelSerializer):
         model = Todo
         fields = ['status']
 
+class UserProfileSerializer(serializers.ModelSerializer):
+    date_joined_readable = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['email', 'name', 'avatar', 'date_joined', 'date_joined_readable']
+        read_only_fields = ['email', 'date_joined']  # Эти поля не должны изменяться через этот эндпоинт
+
+    def get_date_joined_readable(self, obj):
+        if obj.date_joined:
+            moscow_tz = pytz.timezone('Europe/Moscow')
+            localized_date = obj.date_joined.astimezone(moscow_tz)
+            return localized_date.strftime('%Y-%m-%d %H:%M:%S')
+        return None
+
+    def validate_avatar(self, value):
+        if value:
+            max_size = 2 * 1024 * 1024  # 2MB
+            if value.size > max_size:
+                raise serializers.ValidationError("Avatar file size should not exceed 2MB")
+        return value
 
 class TodosSerializer(serializers.ModelSerializer):
     created_at_moscow = serializers.SerializerMethodField()
